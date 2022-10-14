@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>日历</title>
+		<link rel="stylesheet" href="https://uicdn.toast.com/tui.time-picker/latest/tui-time-picker.min.css" />
+		<link rel="stylesheet" href="https://uicdn.toast.com/tui.date-picker/latest/tui-date-picker.min.css" />
+		<link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
+		<link rel="stylesheet" href="https://uicdn.toast.com/select-box/latest/toastui-select-box.css" />
+		<link rel="stylesheet" href="//at.alicdn.com/t/c/font_3704400_kwdr0hsnkv.css">
+		<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.5/dayjs.min.js"></script>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+			html {
+				height: 100%;
+			}
+			body {
+				height: 100%;
+				padding: 0 2%;
+			}
+			#app {
+				height: 100%;
+				overflow: auto;
+				position: relative;
+				z-index: 3;
+			}
+			.mask {
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				margin: auto;
+				background: url(img/bg.jfif) repeat center;
+				opacity: .1;
+			}
+			#main {
+				height: calc(100vh - 140px);
+				border: 1px solid #e5e5e5;
+			}
+			.toastui-calendar-section-button .toastui-calendar-icon {
+				top: 0;
+			}
+			button {
+				background: transparent;
+				outline: none;
+				box-shadow: 0;
+			}
+			.btn {
+				border-radius: 25px;
+				border: 1px solid #ddd;
+				font-size: 12px;
+				color: #333;
+				margin-right: 5px;
+				height: 30px;
+				padding: 0 16px;
+				transition: .3s;
+			}
+			.btn.round {
+				width: 30px;
+				height: 30px;
+				padding: 0;
+				border-radius: 30px;
+			}
+			.btn:hover {
+				cursor: pointer;
+				box-shadow: 1px 1px 10px rgba(50,50,50,.1);
+			}
+			h1 {
+				padding: 10px 0;
+				font-size: 20px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			h1 #time{
+				color: #444;
+				font-size: 14px;
+				font-weight: normal;
+			}
+			.clear:after {
+				content: '';
+				display: block;
+				height: 0;
+				clear: both;
+			}
+			.head {
+				padding: 10px 0 30px 0;
+				display: flex;
+				justify-content: space-between;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="mask"></div>
+		<div id="app">
+			<h1><span>预则立，不预则废。</span><span id="time"></span></h1>
+			<div class="head">
+				<div class="left">
+					<button class="btn" id="today" onclick="today()">今天</button>
+					<button class="btn round" id="prev" onclick="next(-12)"><i class="iconfont icon-arrow-double-left"></i></button>
+					<button class="btn round" id="prev" onclick="next(-1)"><i class="iconfont icon-arrow-left-bold"></i></button>
+					</span> <span id="date"></span>
+					<button class="btn round" id="prev" onclick="next()"><i class="iconfont icon-arrow-right-bold"></i></button>
+					<button class="btn round" id="next" onclick="next(12)"><i class="iconfont icon-arrow-double-right"></i></button>
+				</div>
+				<div class="right">
+					<button class="btn" onclick="removeAll()">清除所有</button>
+				</div>
+			</div>
+			<div id="main"></div>
+		</div>
+		<script src="https://uicdn.toast.com/select-box/latest/toastui-select-box.js"></script>
+		<script src="https://uicdn.toast.com/tui.time-picker/latest/tui-time-picker.min.js"></script>
+		<script src="https://uicdn.toast.com/tui.date-picker/latest/tui-date-picker.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
+		<script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/store@2.0.12/dist/store.everything.min.js"></script>
+		<script>
+			var Calendar = window.tui.Calendar;
+			var events = store.get('events') || []
+			events = events.map(item => {
+				item.start = (typeof item.start === 'string') ? item.start : item.start.d.d
+				item.end= (typeof item.end === 'string') ? item.end : item.end.d.d
+				return item
+			})
+			var cal = new Calendar('#main', {
+			  defaultView: 'month',
+				useFormPopup: true,
+				useDetailPopup: true,
+				theme: {
+					common: {
+						backgroundColor: 'transparent',
+						// dayName: {
+						// 	color: '#0074D9'
+						// }
+					}
+				},
+				calendars: [
+					{
+					  id: '1',
+					  name: '重要又紧急',
+					  color: '#ffffff',
+					  borderColor: '#f00',
+					  backgroundColor: '#FF4136',
+					  dragBackgroundColor: '#FF4136',
+					},
+					{
+					  id: '2',
+					  name: '重要不紧急',
+					  color: '#ffffff',
+					  borderColor: '#0f0',
+					  backgroundColor: '#2ECC40',
+					  dragBackgroundColor: '#2ECC40',
+					},
+					{
+					  id: '3',
+					  name: '紧急不重要',
+					  color: '#fff',
+					  borderColor: '#00f',
+					  backgroundColor: '#0074D9',
+					  dragBackgroundColor: '#0074D9',
+					},
+					{
+					  id: '4',
+					  name: '不紧急不重要',
+					  color: '#ffffff',
+					  borderColor: '#000',
+					  backgroundColor: '#111',
+					  dragBackgroundColor: '#111',
+					}
+				]
+			})
+			cal.createEvents(events)
+			function updateItem (obj) {
+				var index
+				events.forEach((item, i) => {
+					if (item.id == obj.id) {
+						index = i
+					}
+				})
+				if (index != undefined) {
+					events[index] = obj
+				}
+				store.set('events', events)
+			}
+			function addItem (obj) {
+				events.push(obj)
+				store.set('events', events)
+			}
+			function delItem (obj) {
+				events = events.filter(item => item.id != obj.id)
+				store.set('events', events)
+			}
+			function initTime () {
+				time.innerHTML = dayjs().format('YYYY-MM-DD HH:mm:ss')
+			}
+			function interval () {
+				window.timer = setInterval(() => {
+					initTime()
+				}, 1 * 1000)
+			}
+			function renderYear() {
+				var y = cal.getDate().d.getFullYear()
+				var month = cal.getDate().d.getMonth()
+				date.innerHTML = y + '年' + (month + 1) + '月'
+			}
+			cal.on('clickEvent', ({ event }) => {
+			  // console.log(event)
+			})
+			cal.on('beforeUpdateEvent', ({event, changes}) => {
+				cal.updateEvent(event.id, event.calendarId, {
+					...changes
+				})
+				const item = {
+					...event,
+					...changes
+				}
+				updateItem(item)
+			})
+			cal.on('beforeCreateEvent', (eventObj) => {
+				const task = {
+					...eventObj,
+					id: + new Date() + '',
+					attendees: null,
+					category: 'time'
+				}
+			  var e = cal.createEvents([
+			    task
+			  ])
+				addItem(task)
+			})
+			cal.on('beforeDeleteEvent', (event) => {
+				delItem(event)
+				cal.deleteEvent(event.id, event.calendarId)
+			})
+			function next (num) {
+				num = num || 1
+				cal.move(num)
+				renderYear()
+			}
+			function prev () {
+				cal.prev()
+				renderYear()
+			}
+			function today () {
+				cal.today()
+				renderYear()
+			}
+			function removeAll () {
+				var f = window.confirm('慎重！')
+				if (!f) return
+				events = []
+				store.set('events', '')
+				cal.clear()
+			}
+			initTime()
+			renderYear()
+			interval()
+		</script>
+	</body>
+</html>
